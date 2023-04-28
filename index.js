@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js';
-import { getDatabase, ref, push, onValue } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js';
+import { getDatabase, ref, push, onValue, remove } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js';
 
 const appSettings = {
   databaseURL:
@@ -8,7 +8,7 @@ const appSettings = {
 
 const app = initializeApp(appSettings);
 const database = getDatabase(app);
-const shoppingListInDB = ref(database, 'shoppingList');
+const shoppingListInDB = ref(database, 'data');
 
 const inputField = document.getElementById('input-field');
 const addButton = document.getElementById('add-button');
@@ -27,13 +27,25 @@ addButton.addEventListener('click', function () {
 
 onValue(shoppingListInDB, function(snapshot) {
 
-  clearShoppingList();
 
-  let itemsArray = Object.values(snapshot.val());
+  if (snapshot.exists()) {
 
-  for (let i = 0; i < itemsArray.length; i++) {
-     appendItemToListItemsInputs(itemsArray[i]);
+   clearShoppingList();
+
+   let itemsArray = Object.entries(snapshot.val());
+
+   for (let i = 0; i < itemsArray.length; i++) {
+     let currentItem = itemsArray[i];
+     let currentItemID = currentItem[0];
+     let currentItemValue = currentItem[1];
+
+     appendItemToListItemsInputs(currentItem);
+   }
+
+  } else {
+    shoppingList.innerHTML = "Nothing to see here ..."
   }
+
 
 });
 
@@ -48,8 +60,26 @@ inputField.value = "";
 
 }
 
-function appendItemToListItemsInputs(inputValue) {
+function appendItemToListItemsInputs(item) {
+  let itemID = item[0]
+  let itemValue = item[1]
 
-  shoppingList.innerHTML += `<li>${inputValue}</li>`;
+  let newElement = document.createElement('li');
+
+  newElement.textContent = itemValue;
+
+  // newElement.classList.add('item');
+
+
+
+  newElement.addEventListener("click", function() {
+    let exactLocationInDB = ref(database, `data/${itemID}`);
+
+    remove(exactLocationInDB);
+
+  })
+
+  shoppingList.append(newElement)
+  // shoppingList.innerHTML += `<li>${inputValue}</li>`;
 
 }
